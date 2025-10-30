@@ -1,0 +1,301 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8" />
+<title>Player Ultimate - Versão Definitiva</title>
+<style>
+:root{
+  --accent:#ff6600;
+  --bg:#111;
+  --fg:#eee;
+  --bg-alt:#1a1a1a;
+}
+body{
+  margin:0;
+  font-family:Arial,Helvetica,sans-serif;
+  display:flex;
+  height:100vh;
+  background:var(--bg);
+  color:var(--fg);
+  transition: background 0.3s, color 0.3s;
+}
+#sidebar{
+  width:260px;
+  padding:18px;
+  border-right:1px solid #333;
+  box-sizing:border-box;
+  background:var(--bg-alt);
+  overflow:auto;
+}
+#main{
+  flex:1;
+  padding:18px;
+  box-sizing:border-box;
+  overflow:auto;
+}
+h1,h3{margin:0 0 12px 0;color:var(--accent)}
+button{
+  cursor:pointer;
+  padding:8px 12px;
+  border-radius:6px;
+  border:0;
+  background:#222;
+  color:#fff;
+  margin:2px;
+}
+input[type="file"],input[type="text"],select{
+  display:block;
+  margin:8px 0;
+  padding:6px;
+  width:100%;
+  box-sizing:border-box;
+  border-radius:6px;
+  border:1px solid #333;
+  background:var(--bg-alt);
+  color:var(--fg);
+}
+ul{padding-left:0;list-style:none;margin:8px 0;max-height:220px;overflow:auto}
+li{
+  padding:6px;
+  border-radius:6px;
+  margin:4px 0;
+  background:var(--bg);
+  display:flex;
+  justify-content:space-between;
+  align-items:center;
+}
+.small{font-size:13px;color:#bbb}
+#cover{width:260px;height:260px;object-fit:cover;border-radius:8px;background:#222;margin-bottom:10px}
+#controls{display:flex;gap:8px;flex-wrap:wrap;margin:10px 0}
+#visualizer{width:100%;height:140px;background:#0b0b0b;border-radius:8px;margin-top:14px}
+label.range{display:block;margin:6px 0}
+.accent{color:var(--accent)}
+.muted{color:#999;font-size:13px}
+.btn-accent{background:var(--accent);border:none;color:#111}
+.btn-danger{background:#9b2a2a}
+.list-actions button{padding:6px 8px}
+#playerLink{width:100%;padding:8px;border-radius:6px;border:1px solid #333;background:var(--bg-alt);color:var(--fg)}
+</style>
+</head>
+<body>
+
+<div id="sidebar">
+  <div id="clock" class="muted">Hora: --:--</div>
+  <h3 class="accent">Conta</h3>
+  <button onclick="showLogin()">Login / Registrar</button>
+  <hr style="border-color:#222;margin:12px 0">
+  <h3 class="accent">Controles Rápidos</h3>
+  <div style="margin:8px 0">
+    <button onclick="toggleLoop()">Loop: <span id="loopLabel">Off</span></button>
+    <button onclick="toggleShuffle()">Shuffle: <span id="shuffleLabel">Off</span></button>
+    <button onclick="toggleTheme()">Tema: <span id="themeLabel">Escuro</span></button>
+  </div>
+  <hr style="border-color:#222;margin:12px 0">
+  <h3 class="accent">Favoritos</h3>
+  <ul id="favoritesList"></ul>
+  <h3 class="accent">Histórico</h3>
+  <ul id="historyList"></ul>
+  <hr style="border-color:#222;margin:12px 0">
+  <button onclick="showPlayerModal()">Abrir reprodutor (seleção)</button>
+</div>
+
+<div id="main">
+  <h1>Player Ultimate</h1>
+
+  <img id="cover" src="" alt="Capa (se disponível)">
+  <audio id="player" controls style="width:100%;display:block"></audio>
+
+  <div id="controls">
+    <button onclick="prevMusic()" class="btn-accent">◀ Anterior</button>
+    <button onclick="playPause()">⏯ Play/Pause</button>
+    <button onclick="nextMusic()" class="btn-accent">Próxima ▶</button>
+    <button id="favBtn" onclick="toggleFavorite()" title="Favoritar">♡ Favorito</button>
+    <button onclick="openMiniGame()">🎮 Jogo</button>
+    <button onclick="clearPlaylist()" class="btn-danger">Limpar playlist</button>
+  </div>
+
+  <div id="progressWrapper" style="max-width:620px;">
+    <input type="range" id="progress" min="0" max="100" value="0" style="width:100%">
+    <div class="small" id="timeDisplay">00:00 / 00:00</div>
+  </div>
+
+  <div style="margin-top:12px;max-width:620px;">
+    <label class="range">Volume: <input id="volume" type="range" min="0" max="1" step="0.01" value="1"></label>
+    <label class="range">Tipo de música:
+      <select id="musicType">
+        <option value="musica">Música</option>
+        <option value="podcast">Podcast</option>
+        <option value="audiobook">Audiobook</option>
+        <option value="outro">Outro</option>
+      </select>
+    </label>
+  </div>
+
+  <div id="equalizer" style="max-width:620px;margin-top:6px;">
+    <div class="muted">Equalizador (Baixo / Médio / Agudo)</div>
+    <label class="range">Baixo: <input id="bass" type="range" min="-30" max="30" value="0"></label>
+    <label class="range">Médio: <input id="mid" type="range" min="-30" max="30" value="0"></label>
+    <label class="range">Agudo: <input id="treble" type="range" min="-30" max="30" value="0"></label>
+    <canvas id="visualizer"></canvas>
+  </div>
+
+  <hr style="margin:14px 0;border-color:#222">
+
+  <h3 class="accent">Player por Link</h3>
+  <input id="playerLink" placeholder="Cole link direto para .mp3/.wav e clique Tocar">
+  <div style="margin-top:8px">
+    <button onclick="playLink()" class="btn-accent">Tocar Link</button>
+    <button onclick="addLinkToList()">Adicionar à lista</button>
+  </div>
+
+  <hr style="margin:14px 0;border-color:#222">
+
+  <h3 class="accent">Lista de músicas (arquivos e links)</h3>
+  <input type="file" id="filePicker" multiple accept="audio/*">
+  <input type="file" id="coverPicker" multiple accept="image/*" style="margin-top:6px">
+  <div class="muted small">Selecione arquivos → clique em uma música para adicionar ao playlist</div>
+  <ul id="musicList"></ul>
+
+  <hr style="margin:14px 0;border-color:#222">
+
+  <h3 class="accent">Playlist atual</h3>
+  <ul id="playlist"></ul>
+  <div class="muted small">Clique em uma música na playlist para tocar ela agora</div>
+</div>
+
+<!-- Login modal simples -->
+<div id="modalOverlay" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.6);z-index:40"></div>
+<div id="loginModal" style="display:none;position:fixed;left:50%;top:50%;transform:translate(-50%,-50%);background:var(--bg);padding:18px;border-radius:8px;z-index:50;color:var(--fg)">
+  <h3>Login / Registrar</h3>
+  <input id="user" placeholder="Usuário">
+  <input id="pass" placeholder="Senha" type="password">
+  <div style="margin-top:8px">
+    <button onclick="doRegister()">Registrar</button>
+    <button onclick="doLogin()">Entrar</button>
+    <button onclick="closeLogin()">Fechar</button>
+  </div>
+</div>
+
+<!-- Mini-game -->
+<div id="gameModal" style="display:none;position:fixed;left:50%;top:50%;transform:translate(-50%,-50%);background:var(--bg-alt);padding:18px;border-radius:8px;z-index:50;color:var(--fg)">
+  <h3>Mini-Jogo</h3>
+  <div id="gameArea" style="width:400px;height:300px;background:#222;border-radius:8px"></div>
+  <button onclick="closeMiniGame()" style="margin-top:8px">Fechar</button>
+</div>
+
+<script>
+let musicList=[], playlist=[], currentIndex=0, loop=false, shuffle=false, theme="escuro";
+let favorites=[], history=[];
+
+const player=document.getElementById("player");
+const musicUl=document.getElementById("musicList");
+const playlistUl=document.getElementById("playlist");
+const favBtn=document.getElementById("favBtn");
+const favoritesList=document.getElementById("favoritesList");
+const historyList=document.getElementById("historyList");
+const progress=document.getElementById("progress");
+const timeDisplay=document.getElementById("timeDisplay");
+const volume=document.getElementById("volume");
+
+player.volume=1;
+
+// Clock
+function updateClock(){const d=new Date();document.getElementById("clock").textContent=`Hora: ${d.getHours().toString().padStart(2,'0')}:${d.getMinutes().toString().padStart(2,'0')}`;}
+setInterval(updateClock,1000);
+updateClock();
+
+// Theme
+function toggleTheme(){theme=theme==="escuro"?"claro":"escuro";
+if(theme==="claro"){document.body.style.background="#eee";document.body.style.color="#111";document.documentElement.style.setProperty('--bg','#fff');document.documentElement.style.setProperty('--fg','#111');document.documentElement.style.setProperty('--bg-alt','#ddd');}else{document.body.style.background="#111";document.body.style.color="#eee";document.documentElement.style.setProperty('--bg','#111');document.documentElement.style.setProperty('--fg','#eee');document.documentElement.style.setProperty('--bg-alt','#1a1a1a');}
+document.getElementById("themeLabel").textContent=theme.charAt(0).toUpperCase()+theme.slice(1);}
+
+// Playlist functions
+function addMusic(file){const url=URL.createObjectURL(file);musicList.push({name:file.name,url,cover:null});renderMusicList();}
+function renderMusicList(){musicUl.innerHTML="";musicList.forEach((m,i)=>{const li=document.createElement("li");li.textContent=m.name;li.onclick=()=>{addToPlaylist(i)};musicUl.appendChild(li);});}
+function addToPlaylist(index){playlist.push({...musicList[index]});renderPlaylist();}
+function renderPlaylist(){playlistUl.innerHTML="";playlist.forEach((m,i)=>{const li=document.createElement("li");li.textContent=m.name;li.onclick=()=>{playIndex(i)};playlistUl.appendChild(li);});}
+function playIndex(index){if(index<0||index>=playlist.length)return;currentIndex=index;player.src=playlist[currentIndex].url;player.play();updateCover();addToHistory(playlist[currentIndex]);updateFavButton();}
+
+// Controls
+function playPause(){if(player.paused)player.play();else player.pause();}
+function nextMusic(){if(shuffle)currentIndex=Math.floor(Math.random()*playlist.length);else currentIndex++;if(currentIndex>=playlist.length){if(loop)currentIndex=0;else currentIndex=playlist.length-1;}playIndex(currentIndex);}
+function prevMusic(){currentIndex--;if(currentIndex<0){if(loop)currentIndex=playlist.length-1;else currentIndex=0;}playIndex(currentIndex);}
+
+// Loop / Shuffle
+function toggleLoop(){loop=!loop;document.getElementById("loopLabel").textContent=loop?"On":"Off";}
+function toggleShuffle(){shuffle=!shuffle;document.getElementById("shuffleLabel").textContent=shuffle?"On":"Off";}
+
+// Progress
+player.addEventListener("timeupdate",()=>{if(player.duration){progress.value=(player.currentTime/player.duration)*100;const c=Math.floor(player.currentTime),d=Math.floor(player.duration);timeDisplay.textContent=`${Math.floor(c/60).toString().padStart(2,'0')}:${(c%60).toString().padStart(2,'0')} / ${Math.floor(d/60).toString().padStart(2,'0')}:${(d%60).toString().padStart(2,'0')}`;}});
+progress.addEventListener("input",()=>{player.currentTime=(progress.value/100)*player.duration;});
+volume.addEventListener("input",()=>{player.volume=volume.value;});
+
+// Favorites / History
+function toggleFavorite(){const cSong=playlist[currentIndex];const idx=favorites.findIndex(f=>f.url===cSong.url);if(idx>=0){favorites.splice(idx,1);}else{favorites.push(cSong);}renderFavorites();updateFavButton();}
+function renderFavorites(){favoritesList.innerHTML="";favorites.forEach(f=>{const li=document.createElement("li");li.textContent=f.name;favoritesList.appendChild(li);});}
+function updateFavButton(){const cSong=playlist[currentIndex];favBtn.textContent=favorites.find(f=>f.url===cSong.url)?"❤️ Favorito":"♡ Favorito";}
+function addToHistory(song){history.push(song);renderHistory();}
+function renderHistory(){historyList.innerHTML="";history.forEach(h=>{const li=document.createElement("li");li.textContent=h.name;historyList.appendChild(li);});}
+
+// File picker
+document.getElementById("filePicker").addEventListener("change",e=>{Array.from(e.target.files).forEach(f=>addMusic(f));});
+document.getElementById("coverPicker").addEventListener("change",e=>{const f=e.target.files[0];if(f)document.getElementById("cover").src=URL.createObjectURL(f);});
+
+// Player by link
+function playLink(){const l=document.getElementById("playerLink").value.trim();if(!l)return;player.src=l;player.play();}
+function addLinkToList(){const l=document.getElementById("playerLink").value.trim();if(!l)return;playlist.push({name:l.split("/").pop(),url:l,cover:null});renderPlaylist();}
+
+// Mini-game
+function openMiniGame(){document.getElementById("gameModal").style.display="block";}
+function closeMiniGame(){document.getElementById("gameModal").style.display="none";}
+
+// Login modal
+function showLogin(){document.getElementById("modalOverlay").style.display="block";document.getElementById("loginModal").style.display="block";}
+function closeLogin(){document.getElementById("modalOverlay").style.display="none";document.getElementById("loginModal").style.display="none";}
+function doRegister(){alert("Registrado (simulação)");}
+function doLogin(){alert("Logado (simulação)");}
+
+// Playlist helpers
+function clearPlaylist(){playlist=[];renderPlaylist();currentIndex=0;player.src="";}
+function updateCover(){const c=playlist[currentIndex];if(c&&c.cover)document.getElementById("cover").src=c.cover;}
+
+// Equalizer / visualizer
+const canvas=document.getElementById("visualizer");
+const ctx=canvas.getContext("2d");
+canvas.width=canvas.offsetWidth;
+canvas.height=canvas.offsetHeight;
+let audioCtx, analyser, sourceNode;
+
+function initAudioContext(){
+  if(audioCtx)return;
+  audioCtx=new (window.AudioContext||window.webkitAudioContext)();
+  sourceNode=audioCtx.createMediaElementSource(player);
+  analyser=audioCtx.createAnalyser();
+  sourceNode.connect(analyser);
+  analyser.connect(audioCtx.destination);
+  analyser.fftSize=128;
+  drawVisualizer();
+}
+
+function drawVisualizer(){
+  requestAnimationFrame(drawVisualizer);
+  if(!analyser)return;
+  const bufferLength=analyser.frequencyBinCount;
+  const dataArray=new Uint8Array(bufferLength);
+  analyser.getByteFrequencyData(dataArray);
+  ctx.fillStyle="#0b0b0b";
+  ctx.fillRect(0,0,canvas.width,canvas.height);
+  const barWidth=(canvas.width/bufferLength);
+  for(let i=0;i<bufferLength;i++){
+    const barHeight=dataArray[i];
+    ctx.fillStyle=`rgb(${barHeight+100},${barHeight},${barHeight/2})`;
+    ctx.fillRect(i*barWidth,canvas.height-barHeight/2,barWidth,barHeight/2);
+  }
+}
+
+// Ativar AudioContext no primeiro clique do usuário
+player.addEventListener("play",()=>{initAudioContext();});
+</script>
+
+</body>
+</html>
