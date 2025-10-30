@@ -25,3 +25,8 @@ O objetivo é:
 1. Clone o repositório:
    ```bash
    git clone https://github.com/bernardoalvescaetano888-glitch/player.git
+Navegue até a pasta:
+
+bash
+Copiar código
+cd player
