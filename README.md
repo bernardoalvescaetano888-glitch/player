@@ -15,7 +15,7 @@ Um projeto divertido para ouvir músicas e testar ideias novas.
 
 Ele possui:
 
-Um arquivo principal chamado player_ultimate_final_deluxe.html
+Um arquivo principal chamado y.html
 
 Várias músicas em formato .mp3
 
@@ -30,8 +30,10 @@ git clone https://github.com/bernardoalvescaetano888-glitch/player.git
 
 Abra a pasta player.
 
-Clique duas vezes no arquivo player_ultimate_final_deluxe.html para abrir no navegador.
+Clique duas vezes no arquivo y.html para abrir no navegador.
 
 Pronto! O player vai tocar as músicas do projeto.
 
-Se quiser, você pode adicionar novas músicas na pasta e colocá-las no código HTML.
+Se quiser, você pode adicionar novas músicas na pasta e colocá-las no código HTML. 
+
+se quiser que eu faça alguma alteraçao o email meu é  bernardoalvescaetano888@gmail.com
