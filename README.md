@@ -27,6 +27,4 @@ O objetivo é:
    git clone https://github.com/bernardoalvescaetano888-glitch/player.git
 Navegue até a pasta:
 
-bash
-Copiar código
 cd player
